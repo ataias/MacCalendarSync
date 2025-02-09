@@ -19,11 +19,8 @@ struct MacCalendarSync: AsyncParsableCommand {
     @Option(help: "Source calendar name; events will be copied from this one into target")
     var sourceCalendarName: String
 
-    @Option(help: "Start date in format \(INPUT_DATE_FORMAT)")
-    var startDate: String
-
-    @Option(help: "End date in format \(INPUT_DATE_FORMAT)")
-    var endDate: String
+    @Option(help: "Number of days to sync from today; defaults to 28")
+    var days: Int = 28
 
     mutating func run() async throws {
         let formatter = DateFormatter()
@@ -33,14 +30,8 @@ struct MacCalendarSync: AsyncParsableCommand {
         let eventStore = EKEventStore()
         try await eventStore.requestFullAccessToEvents()
 
-        guard let startDate = formatter.date(from: startDate) else {
-            fatalError(
-                "Start date not valid; Format should be \(INPUT_DATE_FORMAT)")
-        }
-        guard let endDate = formatter.date(from: endDate) else {
-            fatalError(
-                "End date not valid; Format should be \(INPUT_DATE_FORMAT)")
-        }
+        let startDate = Date().addingTimeInterval(-4 * 60 * 60)
+        let endDate = Date().addingTimeInterval(TimeInterval(days) * 24 * 60 * 60)
 
         let target = MyCalendar(
             eventStore: eventStore,

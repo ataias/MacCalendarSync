@@ -21,12 +21,10 @@ public struct MyCalendar {
                 $0.title == title
             }).first
         else {
-            print(#function, "Calendar with title \"\(title)\" not found")
-            fatalError()
+            fatalError("Calendar with title \"\(title)\" not found")
         }
         guard calendar.allowsContentModifications else {
-            print(#function, "Calendar \(calendar) does not allow content modifications")
-            fatalError()
+            fatalError("Calendar \(calendar) does not allow content modifications")
         }
 
         self.calendar = calendar

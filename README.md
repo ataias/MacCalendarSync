@@ -34,7 +34,7 @@ mac-calendar-sync --generate-completion-script fish
 If you have [oh-my-zsh](https://ohmyz.sh/) installed, you already have a directory of automatically loading completion scripts — `.oh-my-zsh/completions`. Copy your new completion script to that directory.
 
 ```sh
-$ MacCalendarSync --generate-completion-script zsh > ~/.oh-my-zsh/completions/_example
+$ mac-calendar-sync --generate-completion-script zsh > ~/.oh-my-zsh/completions/_example
 ```
 
 If you have fish installed, copy the completion script to any path listed in the environment variable `$fish_completion_path`. For example, a typical location is `~/.config/fish/completions/your_script.fish`. You can also do that easily with one of our make commands:
@@ -44,6 +44,23 @@ make install-completions-fish
 ```
 
 If none of the cases above works for you, please research on how to enable completions for your shell. A few more options can be seen [here](https://swiftpackageindex.com/apple/swift-argument-parser/1.5.0/documentation/argumentparser/installingcompletionscripts).
+
+## Run on a schedule
+
+We can use `launchd` to run this on a schedule:
+
+```sh
+mkdir -p ~/Library/LaunchAgents
+# Make sure to remove the `--dry-run` option once you are confident about the script; as for `--days 3`, you should customize the number
+./scripts/generate-plist.sh "Calendar 1" "Calendar 2" --dry-run --days 3 > ~/Library/LaunchAgents/br.com.ataias.mac-calendar-sync.plist
+launchctl load -w ~/Library/LaunchAgents/br.com.ataias.mac-calendar-sync.plist
+```
+
+To stop the schedule:
+
+```sh
+launchctl unload ~/Library/LaunchAgents/br.com.ataias.mac-calendar-sync.plist
+```
 
 ## Pending Work
 
