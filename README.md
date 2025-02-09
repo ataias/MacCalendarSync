@@ -8,9 +8,22 @@ To run it:
 swift run -- MacCalendarSync --verbose --target-calendar-name "Target Calendar" --source-calendar-name "Source Calendar" --start-date "2025-02-10 00:00:00" --end-date "2025-02-21 23:23:59" --dry-run
 ```
 
+## Install
+
+```sh
+make
+make install
+```
+
+The above will install the program to `~/.local/bin/MacCalendarSync`. If that's not in your path, you can either customize your path or install it to another location:
+
+```sh
+# Note this needs sudo because it install in a root directory
+PREFIX=/usr/local/bin sudo make -e install
+```
+
 ## Pending Work
 
-- Add Makefile with commands to install, uninstall
 - [Allow for generation fo shell completion](https://swiftpackageindex.com/apple/swift-argument-parser/1.5.0/documentation/argumentparser/installingcompletionscripts)
 - [Allow for an easy way of installing schedules and enabling them using launchd](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/ScheduledJobs.html)
   - Intention is to allow running the program on a schedule to keep a set of calendars synchronized
