@@ -47,6 +47,10 @@ If none of the cases above works for you, please research on how to enable compl
 
 ## Run on a schedule
 
+TODO: I should probably do with [sub-commands with ArgumentParser](https://swiftinit.org/docs/swift-argument-parser/argumentparser/commandsandsubcommands). One of the sub-commands can be to do the sync operation, while another sub-commands could be to install and load the plist file. We could also have a command to unload. That would make things much easier.
+
+TODO: the configuration should be a json, otherwise there is a constant need to unload/load the plist file.
+
 We can use `launchd` to run this on a schedule:
 
 ```sh
