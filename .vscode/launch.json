@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:MacCalendarSync}",
+            "name": "Debug MacCalendarSync",
+            "program": "${workspaceFolder:MacCalendarSync}/.build/debug/MacCalendarSync",
+            "preLaunchTask": "swift: Build Debug MacCalendarSync"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:MacCalendarSync}",
+            "name": "Release MacCalendarSync",
+            "program": "${workspaceFolder:MacCalendarSync}/.build/release/MacCalendarSync",
+            "preLaunchTask": "swift: Build Release MacCalendarSync"
+        }
+    ]
+}
