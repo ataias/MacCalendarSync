@@ -11,10 +11,10 @@ struct CalendarSyncNonRedactedTests {
     let calendar2: MyCalendar
     let startDate: Date
     let endDate: Date
-    
+
     init() async throws {
         self.formatter = ISO8601DateFormatter()
-        
+
         self.eventStore = MockEventStore()
         let calendar1 = try makeCalendar(
             eventStore: eventStore, title: "Test Calendar 1")
@@ -39,12 +39,12 @@ struct CalendarSyncNonRedactedTests {
             from: "2023-01-01T08:00:00Z",
             to: "2023-01-01T09:00:00Z"
         )
-        
+
         let calendar2 = try makeCalendar(
             eventStore: eventStore,
             title: "Test Calendar 2"
         )
-        
+
         try makeEvent(
             eventStore: eventStore,
             title: "[EXTERNAL] Event 1",
@@ -52,7 +52,7 @@ struct CalendarSyncNonRedactedTests {
             from: "2023-01-01T10:00:00Z",
             to: "2023-01-01T11:00:00Z"
         )
-        
+
         try makeEvent(
             eventStore: eventStore,
             title: "[EXTERNAL] Unknown 2",
@@ -60,7 +60,7 @@ struct CalendarSyncNonRedactedTests {
             from: "2023-01-01T10:00:00Z",
             to: "2023-01-01T11:00:00Z"
         )
-        
+
         try makeEvent(
             eventStore: eventStore,
             title: "Some Event in Calendar 2",
@@ -68,19 +68,18 @@ struct CalendarSyncNonRedactedTests {
             from: "2023-01-01T09:00:00Z",
             to: "2023-01-01T10:00:00Z"
         )
-        
+
         self.calendar1 = MyCalendar(
             eventStore: eventStore,
-            title: calendar1.title,
-            email: "email1@asdf.com"
+            title: calendar1.title
         )
         self.calendar2 = MyCalendar(
-            eventStore: eventStore, title: calendar2.title, email: "email2@asdf.com")
-        
+            eventStore: eventStore, title: calendar2.title)
+
         self.startDate = formatter.date(from: "2023-01-01T00:00:00Z")!
         self.endDate = formatter.date(from: "2023-01-01T23:23:59Z")!
     }
-    
+
     @Test func identifiesNonRedactedSyncedEventsFromCalendar1To2() async throws {
         let diff = calendar1.diff(
             calendar2, start: startDate, end: endDate, redact: false)
@@ -88,13 +87,13 @@ struct CalendarSyncNonRedactedTests {
         let event = diff.synced[0]
         #expect(event.title == "Event 1")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T11:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesNonRedactedSyncedEventsFromCalendar2To1() async throws {
         let diff = calendar2.diff(
             calendar1, start: startDate, end: endDate, redact: false)
@@ -102,13 +101,13 @@ struct CalendarSyncNonRedactedTests {
         let event = diff.synced[0]
         #expect(event.title == "[EXTERNAL] Event 1")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T11:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesNonRedactedAddEventsFromCalendar1To2() async throws {
         let diff = calendar1.diff(
             calendar2, start: startDate, end: endDate, redact: false)
@@ -116,13 +115,13 @@ struct CalendarSyncNonRedactedTests {
         let event = diff.add[0]
         #expect(event.title == "[EXTERNAL] Some Event in Calendar 2")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T09:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesNonRedactedAddEventsFromCalendar2To1() async throws {
         let diff = calendar2.diff(
             calendar1, start: startDate, end: endDate, redact: false)
@@ -130,13 +129,13 @@ struct CalendarSyncNonRedactedTests {
         let event = diff.add[0]
         #expect(event.title == "[EXTERNAL] Some Event in Calendar 1")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T08:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T09:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesNonRedactedRemoveEventsFromCalendar1To2() async throws {
         let diff = calendar1.diff(
             calendar2, start: startDate, end: endDate, redact: false)
@@ -144,13 +143,13 @@ struct CalendarSyncNonRedactedTests {
         let event = diff.remove[0]
         #expect(event.title == "[EXTERNAL] Unknown 1")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T08:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T09:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesNonRedactedRemoveEventsFromCalendar2To1() async throws {
         let diff = calendar2.diff(
             calendar1, start: startDate, end: endDate, redact: false)
@@ -158,7 +157,7 @@ struct CalendarSyncNonRedactedTests {
         let event = diff.remove[0]
         #expect(event.title == "[EXTERNAL] Unknown 2")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T11:00:00Z")!
@@ -174,10 +173,10 @@ struct CalendarSyncRedactedTests {
     let calendar2: MyCalendar
     let startDate: Date
     let endDate: Date
-    
+
     init() async throws {
         self.formatter = ISO8601DateFormatter()
-        
+
         self.eventStore = MockEventStore()
         let calendar1 = try makeCalendar(
             eventStore: eventStore, title: "Test Calendar 1")
@@ -202,12 +201,12 @@ struct CalendarSyncRedactedTests {
             from: "2023-01-01T08:00:00Z",
             to: "2023-01-01T09:00:00Z"
         )
-        
+
         let calendar2 = try makeCalendar(
             eventStore: eventStore,
             title: "Test Calendar 2"
         )
-        
+
         try makeEvent(
             eventStore: eventStore,
             title: "[EXTERNAL]",
@@ -216,17 +215,17 @@ struct CalendarSyncRedactedTests {
             to: "2023-01-01T11:00:00Z",
             notes: "\n\n[BASE_HASH]52e0244b3943f027009ee88ce8345d100f1d282e1a153f931e1d02c30688c051"
         )
-        
+
         // The following event has the same hash as the previous one, but a different start/end time; it should be removed later on
         try makeEvent(
             eventStore: eventStore,
             title: "[EXTERNAL]",
-            calendar: calendar1, // intentionally on calendar1
+            calendar: calendar1,  // intentionally on calendar1
             from: "2023-01-01T13:00:00Z",
             to: "2023-01-01T14:00:00Z",
             notes: "\n\n[BASE_HASH]52e0244b3943f027009ee88ce8345d100f1d282e1a153f931e1d02c30688c051"
         )
-        
+
         try makeEvent(
             eventStore: eventStore,
             title: "[EXTERNAL] Unknown 2",
@@ -234,7 +233,7 @@ struct CalendarSyncRedactedTests {
             from: "2023-01-01T10:00:00Z",
             to: "2023-01-01T11:00:00Z"
         )
-        
+
         try makeEvent(
             eventStore: eventStore,
             title: "Some Event in Calendar 2",
@@ -242,19 +241,18 @@ struct CalendarSyncRedactedTests {
             from: "2023-01-01T09:00:00Z",
             to: "2023-01-01T10:00:00Z"
         )
-        
+
         self.calendar1 = MyCalendar(
             eventStore: eventStore,
-            title: calendar1.title,
-            email: "email1@asdf.com"
+            title: calendar1.title
         )
         self.calendar2 = MyCalendar(
-            eventStore: eventStore, title: calendar2.title, email: "email2@asdf.com")
-        
+            eventStore: eventStore, title: calendar2.title)
+
         self.startDate = formatter.date(from: "2023-01-01T00:00:00Z")!
         self.endDate = formatter.date(from: "2023-01-01T23:23:59Z")!
     }
-    
+
     @Test func identifiesRedactedSyncedEventsFromCalendar1To2() async throws {
         let diff = calendar1.diff(
             calendar2, start: startDate, end: endDate, redact: true)
@@ -263,13 +261,13 @@ struct CalendarSyncRedactedTests {
         #expect(event.title == "Event 1")
         #expect(event.notes == nil)
         print(event.hash())
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T11:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesRedactedSyncedEventsFromCalendar2To1() async throws {
         let diff = calendar2.diff(
             calendar1, start: startDate, end: endDate, redact: true)
@@ -278,14 +276,14 @@ struct CalendarSyncRedactedTests {
         #expect(event.title == "[EXTERNAL]")
         #expect(
             event.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-            == "[BASE_HASH]52e0244b3943f027009ee88ce8345d100f1d282e1a153f931e1d02c30688c051")
-        
+                == "[BASE_HASH]52e0244b3943f027009ee88ce8345d100f1d282e1a153f931e1d02c30688c051")
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T11:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesRedactedAddEventsFromCalendar1To2() async throws {
         let diff = calendar1.diff(
             calendar2, start: startDate, end: endDate, redact: true)
@@ -295,14 +293,14 @@ struct CalendarSyncRedactedTests {
         #expect(event.title == "[EXTERNAL]")
         #expect(
             event.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-            == "[BASE_HASH]156105adbf6c574ff1b89ccad689faf1475ecaf6dbd0d304c0ef0289a25a7311")
-        
+                == "[BASE_HASH]156105adbf6c574ff1b89ccad689faf1475ecaf6dbd0d304c0ef0289a25a7311")
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T09:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesRedactedAddEventsFromCalendar2To1() async throws {
         let diff = calendar2.diff(
             calendar1, start: startDate, end: endDate, redact: true)
@@ -312,30 +310,30 @@ struct CalendarSyncRedactedTests {
         #expect(event.title == "[EXTERNAL]")
         #expect(
             event.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-            == "[BASE_HASH]31dc3df45d0beccff67ca1e4ba39eb04b906e1756bcf2aac9e543c5929ae0d59")
-        
+                == "[BASE_HASH]31dc3df45d0beccff67ca1e4ba39eb04b906e1756bcf2aac9e543c5929ae0d59")
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T08:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T09:00:00Z")!
         #expect(event.endDate == eventEndDate)
     }
-    
+
     @Test func identifiesRedactedRemoveEventsFromCalendar1To2() async throws {
         let diff = calendar1.diff(
             calendar2, start: startDate, end: endDate, redact: true)
         try #require(diff.remove.count == 1)
-        
+
         let event = diff.remove[0]
         #expect(event.title == "[EXTERNAL] Unknown 1")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T08:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T09:00:00Z")!
         #expect(event.endDate == eventEndDate)
-        
+
     }
-    
+
     @Test func identifiesRedactedRemoveEventsFromCalendar2To1() async throws {
         let diff = calendar2.diff(
             calendar1, start: startDate, end: endDate, redact: true)
@@ -343,7 +341,7 @@ struct CalendarSyncRedactedTests {
         let event = diff.remove[0]
         #expect(event.title == "[EXTERNAL] Unknown 2")
         #expect(event.notes == nil)
-        
+
         let eventStartDate: Date = formatter.date(from: "2023-01-01T10:00:00Z")!
         #expect(event.startDate == eventStartDate)
         let eventEndDate: Date = formatter.date(from: "2023-01-01T11:00:00Z")!
@@ -357,9 +355,9 @@ func makeCalendar(eventStore: EKEventStore, title: String) throws -> EKCalendar 
         eventStore: eventStore
     )
     calendar.title = title
-    
+
     try eventStore.saveCalendar(calendar, commit: true)
-    
+
     return calendar
 }
 
@@ -385,16 +383,16 @@ func makeEvent(
 class MockEventStore: EKEventStore {
     private var calendars: Set<EKCalendar> = []
     private var eventIdToEvent: [String: EKEvent] = [:]
-    
+
     override func calendars(for entityType: EKEntityType) -> [EKCalendar] {
         switch entityType {
-            case .event:
-                return Array(calendars)
-            default:
-                return []
+        case .event:
+            return Array(calendars)
+        default:
+            return []
         }
     }
-    
+
     override func predicateForEvents(
         withStart startDate: Date, end endDate: Date, calendars: [EKCalendar]?
     ) -> NSPredicate {
@@ -404,18 +402,18 @@ class MockEventStore: EKEventStore {
             calendars: calendars
         )
     }
-    
+
     override func events(matching predicate: NSPredicate) -> [EKEvent] {
-        
+
         return Array(eventIdToEvent.values).filter {
             return predicate.evaluate(with: $0)
         }
     }
-    
+
     override func saveCalendar(_ calendar: EKCalendar, commit: Bool) throws {
         calendars.insert(calendar)
     }
-    
+
     override func save(_ event: EKEvent, span: EKSpan) throws {
         guard event.calendar != nil else {
             throw NSError(domain: "Missing calendar for event", code: 0)
@@ -423,7 +421,7 @@ class MockEventStore: EKEventStore {
         let id = "\(event.calendar.title)--\(event.title!)"
         eventIdToEvent[id] = event
     }
-    
+
     override func save(_ event: EKEvent, span: EKSpan, commit: Bool) throws {
         try save(event, span: span)
     }
@@ -439,22 +437,22 @@ class MyCalendarPredicate: NSPredicate {
         self.calendars = calendars
         super.init()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override var predicateFormat: String {
         "true"
     }
-    
+
     override func evaluate(with object: Any?) -> Bool {
         if let event = object as? EKEvent {
             return event.startDate >= startDate && event.endDate <= endDate
-            && (calendars == nil
-                || (calendars ?? []).contains(where: { calendar in
-                calendar.title == event.calendar.title
-            }))
+                && (calendars == nil
+                    || (calendars ?? []).contains(where: { calendar in
+                        calendar.title == event.calendar.title
+                    }))
         }
         return false
     }
