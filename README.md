@@ -15,16 +15,38 @@ make
 make install
 ```
 
-The above will install the program to `~/.local/bin/MacCalendarSync`. If that's not in your path, you can either customize your path or install it to another location:
+The above will install the program to `~/.local/bin/mac-calendar-sync`. If that's not in your path, you can either customize your path or install it to another location:
 
 ```sh
 # Note this needs sudo because it install in a root directory
 PREFIX=/usr/local/bin sudo make -e install
 ```
 
+### Auto Completions
+For autocompletions, you can generate them for your shell with the following commands:
+
+```sh
+mac-calendar-sync --generate-completion-script bash
+mac-calendar-sync --generate-completion-script zsh
+mac-calendar-sync --generate-completion-script fish
+```
+
+If you have [oh-my-zsh](https://ohmyz.sh/) installed, you already have a directory of automatically loading completion scripts — `.oh-my-zsh/completions`. Copy your new completion script to that directory.
+
+```sh
+$ MacCalendarSync --generate-completion-script zsh > ~/.oh-my-zsh/completions/_example
+```
+
+If you have fish installed, copy the completion script to any path listed in the environment variable `$fish_completion_path`. For example, a typical location is `~/.config/fish/completions/your_script.fish`. You can also do that easily with one of our make commands:
+
+```sh
+make install-completions-fish
+```
+
+If none of the cases above works for you, please research on how to enable completions for your shell. A few more options can be seen [here](https://swiftpackageindex.com/apple/swift-argument-parser/1.5.0/documentation/argumentparser/installingcompletionscripts).
+
 ## Pending Work
 
-- [Allow for generation fo shell completion](https://swiftpackageindex.com/apple/swift-argument-parser/1.5.0/documentation/argumentparser/installingcompletionscripts)
 - [Allow for an easy way of installing schedules and enabling them using launchd](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/ScheduledJobs.html)
   - Intention is to allow running the program on a schedule to keep a set of calendars synchronized
 
