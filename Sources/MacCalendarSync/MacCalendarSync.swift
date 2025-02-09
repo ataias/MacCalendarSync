@@ -10,6 +10,9 @@ struct MacCalendarSync: AsyncParsableCommand {
     @Flag(help: "Shows status information and what will be changed.")
     var verbose = false
 
+    @Flag(help: "Redact event information before copying")
+    var redact = false
+
     @Option(help: "Target calendar name; events from source calendar will be added to this one")
     var targetCalendarName: String
 
@@ -48,7 +51,7 @@ struct MacCalendarSync: AsyncParsableCommand {
 
         // TODO: when the copied redacted event is modified (start/endDate), it is not deleted; need to add a test there
         let diff = target.diff(
-            source, start: startDate, end: endDate, redact: true)
+            source, start: startDate, end: endDate, redact: redact)
 
         if verbose {
             let synced = diff.synced.map(CalendarEvent.init)

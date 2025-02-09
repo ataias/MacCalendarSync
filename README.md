@@ -2,6 +2,12 @@
 
 MacCalendarSync is a command line tool that allows you to sync events from one calendar to the other via the macOS Calendar app. Local or external calendars that are connected your Calendar app can be used as source and target calendars for synchronization. Events are compared for equality based on title, location, start and end dates. Events can also be redacted, and in this case comparison involves hashing the previously mentioned properties. To facilitate differentiating between copied and non-copied events, the prefix "[EXTERNAL]" is added to the title of the copied event. That prefix is ignored for the purposes of comparing two events for equality.
 
+To run it:
+
+```
+swift run -- MacCalendarSync --verbose --target-calendar-name "Target Calendar" --source-calendar-name "Source Calendar" --start-date "2025-02-10 00:00:00" --end-date "2025-02-21 23:23:59" --dry-run
+```
+
 ## Pending Work
 
 - Add Makefile with commands to install, uninstall
