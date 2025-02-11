@@ -42,6 +42,7 @@ uninstall: $(PREFIX)/$(TARGET)
 
 .PHONY: install
 install: $(RELEASE_BIN)
+	mkdir -p $(PREFIX)
 	cp $(RELEASE_BIN) $(PREFIX)/$(INSTALL_TARGET)
 
 .PHONY: install-completions-fish
