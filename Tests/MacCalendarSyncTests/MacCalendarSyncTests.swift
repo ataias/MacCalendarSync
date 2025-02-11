@@ -349,6 +349,214 @@ struct CalendarSyncRedactedTests {
     }
 }
 
+@Suite("ForwardedEventTests - FW: Prefix")
+struct ForwardedEventTests {
+    let eventStore: EKEventStore
+    let formatter: ISO8601DateFormatter
+    let calendar1: MyCalendar
+    let calendar2: MyCalendar
+    let startDate: Date
+    let endDate: Date
+
+    init() async throws {
+        self.formatter = ISO8601DateFormatter()
+
+        self.eventStore = MockEventStore()
+        let calendar1 = try makeCalendar(
+            eventStore: eventStore, title: "Test Calendar 1")
+
+        try makeEvent(
+            eventStore: eventStore,
+            title: "FW: Meeting with Client",
+            calendar: calendar1,
+            from: "2023-01-01T10:00:00Z",
+            to: "2023-01-01T11:00:00Z"
+        )
+
+        try makeEvent(
+            eventStore: eventStore,
+            title: "FW: Team Standup",
+            calendar: calendar1,
+            from: "2023-01-01T14:00:00Z",
+            to: "2023-01-01T15:00:00Z"
+        )
+
+        let calendar2 = try makeCalendar(
+            eventStore: eventStore,
+            title: "Test Calendar 2"
+        )
+
+        try makeEvent(
+            eventStore: eventStore,
+            title: "Meeting with Client",
+            calendar: calendar2,
+            from: "2023-01-01T10:00:00Z",
+            to: "2023-01-01T11:00:00Z"
+        )
+
+        try makeEvent(
+            eventStore: eventStore,
+            title: "[EXTERNAL] Team Standup",
+            calendar: calendar2,
+            from: "2023-01-01T14:00:00Z",
+            to: "2023-01-01T15:00:00Z"
+        )
+
+        self.calendar1 = MyCalendar(
+            eventStore: eventStore,
+            title: calendar1.title
+        )
+        self.calendar2 = MyCalendar(
+            eventStore: eventStore, title: calendar2.title)
+
+        self.startDate = formatter.date(from: "2023-01-01T00:00:00Z")!
+        self.endDate = formatter.date(from: "2023-01-01T23:23:59Z")!
+    }
+
+    @Test func identifiesSyncedEventsWithFWPrefix() async throws {
+        let diff = calendar1.diff(
+            calendar2, start: startDate, end: endDate, redact: false)
+        try #require(diff.synced.count == 2)
+
+        // Check that FW: prefixed events are properly synced with non-FW: events
+        let syncedTitles = diff.synced.map { $0.title }.sorted()
+        #expect(syncedTitles.contains("FW: Meeting with Client"))
+        #expect(syncedTitles.contains("FW: Team Standup"))
+    }
+
+    @Test func identifiesSyncedEventsWithoutFWPrefix() async throws {
+        let diff = calendar2.diff(
+            calendar1, start: startDate, end: endDate, redact: false)
+        try #require(diff.synced.count == 2)
+
+        // Check that non-FW: events are properly synced with FW: prefixed events
+        let syncedTitles = diff.synced.map { $0.title }.sorted()
+        #expect(syncedTitles.contains("Meeting with Client"))
+        #expect(syncedTitles.contains("[EXTERNAL] Team Standup"))
+    }
+}
+
+@Suite("ForwardedEventTests - FW: Prefix Redacted")
+struct ForwardedEventRedactedTests {
+    let eventStore: EKEventStore
+    let formatter: ISO8601DateFormatter
+    let calendar1: MyCalendar
+    let calendar2: MyCalendar
+    let startDate: Date
+    let endDate: Date
+
+    init() async throws {
+        self.formatter = ISO8601DateFormatter()
+
+        self.eventStore = MockEventStore()
+        let calendar1 = try makeCalendar(
+            eventStore: eventStore, title: "Test Calendar 1")
+
+        // Create an event with FW: prefix that will be redacted
+        try makeEvent(
+            eventStore: eventStore,
+            title: "FW: Meeting with Client",
+            calendar: calendar1,
+            from: "2023-01-01T10:00:00Z",
+            to: "2023-01-01T11:00:00Z"
+        )
+
+        // Create another event with FW: prefix for redaction
+        try makeEvent(
+            eventStore: eventStore,
+            title: "FW: Team Standup",
+            calendar: calendar1,
+            from: "2023-01-01T14:00:00Z",
+            to: "2023-01-01T15:00:00Z"
+        )
+
+        let calendar2 = try makeCalendar(
+            eventStore: eventStore,
+            title: "Test Calendar 2"
+        )
+
+        // For redacted tests, we need the hash of the title WITHOUT the FW: prefix
+        // Create temp events to get the correct hashes
+        let tempEvent1 = EKEvent(eventStore: eventStore)
+        tempEvent1.title = "Meeting with Client"
+        tempEvent1.startDate = formatter.date(from: "2023-01-01T10:00:00Z")!
+        tempEvent1.endDate = formatter.date(from: "2023-01-01T11:00:00Z")!
+
+        let tempEvent2 = EKEvent(eventStore: eventStore)
+        tempEvent2.title = "Team Standup"
+        tempEvent2.startDate = formatter.date(from: "2023-01-01T14:00:00Z")!
+        tempEvent2.endDate = formatter.date(from: "2023-01-01T15:00:00Z")!
+
+        // Create corresponding redacted events with BASE_HASH
+        try makeEvent(
+            eventStore: eventStore,
+            title: "[EXTERNAL]",
+            calendar: calendar2,
+            from: "2023-01-01T10:00:00Z",
+            to: "2023-01-01T11:00:00Z",
+            notes: "\n\n[BASE_HASH]\(tempEvent1.hash())"
+        )
+
+        try makeEvent(
+            eventStore: eventStore,
+            title: "[EXTERNAL]",
+            calendar: calendar2,
+            from: "2023-01-01T14:00:00Z",
+            to: "2023-01-01T15:00:00Z",
+            notes: "\n\n[BASE_HASH]\(tempEvent2.hash())"
+        )
+
+        self.calendar1 = MyCalendar(
+            eventStore: eventStore,
+            title: calendar1.title
+        )
+        self.calendar2 = MyCalendar(
+            eventStore: eventStore, title: calendar2.title)
+
+        self.startDate = formatter.date(from: "2023-01-01T00:00:00Z")!
+        self.endDate = formatter.date(from: "2023-01-01T23:23:59Z")!
+    }
+
+    @Test func identifiesRedactedSyncedEventsFromCalendar1To2WithFWPrefix() async throws {
+        let diff = calendar1.diff(
+            calendar2, start: startDate, end: endDate, redact: true)
+        try #require(diff.synced.count == 2)
+
+        // Verify that FW: prefixed events are properly synced in redacted mode
+        let syncedTitles = diff.synced.map { $0.title }.sorted()
+        #expect(syncedTitles.contains("FW: Meeting with Client"))
+        #expect(syncedTitles.contains("FW: Team Standup"))
+    }
+
+    @Test func identifiesRedactedSyncedEventsFromCalendar2To1WithFWPrefix() async throws {
+        let diff = calendar2.diff(
+            calendar1, start: startDate, end: endDate, redact: true)
+        try #require(diff.synced.count == 2)
+
+        // Create temp events to verify expected hashes
+        let tempEvent1 = EKEvent(eventStore: eventStore)
+        tempEvent1.title = "Meeting with Client"
+        tempEvent1.startDate = formatter.date(from: "2023-01-01T10:00:00Z")!
+        tempEvent1.endDate = formatter.date(from: "2023-01-01T11:00:00Z")!
+
+        let tempEvent2 = EKEvent(eventStore: eventStore)
+        tempEvent2.title = "Team Standup"
+        tempEvent2.startDate = formatter.date(from: "2023-01-01T14:00:00Z")!
+        tempEvent2.endDate = formatter.date(from: "2023-01-01T15:00:00Z")!
+
+        // Verify that redacted events are properly synced with FW: prefixed originals
+        let syncedEvents = diff.synced.sorted { $0.startDate < $1.startDate }
+
+        #expect(syncedEvents[0].title == "[EXTERNAL]")
+        #expect(
+            syncedEvents[0].notes?.trimmingCharacters(in: .whitespacesAndNewlines) == "[BASE_HASH]\(tempEvent1.hash())")
+
+        #expect(syncedEvents[1].title == "[EXTERNAL]")
+        #expect(
+            syncedEvents[1].notes?.trimmingCharacters(in: .whitespacesAndNewlines) == "[BASE_HASH]\(tempEvent2.hash())")
+    }
+}
+
 func makeCalendar(eventStore: EKEventStore, title: String) throws -> EKCalendar {
     let calendar = EKCalendar(
         for: .event,
@@ -418,7 +626,7 @@ class MockEventStore: EKEventStore {
         guard event.calendar != nil else {
             throw NSError(domain: "Missing calendar for event", code: 0)
         }
-        let id = "\(event.calendar.title)--\(event.title!)"
+        let id = "\(event.calendar.title)--\(event.title!)--\(String(describing: event.startDate))"
         eventIdToEvent[id] = event
     }
 

@@ -25,7 +25,9 @@ public struct MyCalendar {
             fatalError()
         }
         guard calendar.allowsContentModifications else {
-            print(#function, "Calendar \(calendar) does not allow content modifications")
+            print(
+                #function,
+                "Calendar \(calendar) does not allow content modifications")
             fatalError()
         }
 
@@ -56,7 +58,8 @@ public struct MyCalendar {
             }
             .filter { event in
                 let isContained = synced.contains { otherEvent in
-                    return areEventsEqual(event, otherEvent, rhsRedacted: redact)
+                    return areEventsEqual(
+                        event, otherEvent, rhsRedacted: redact)
                 }
 
                 return !isContained
@@ -88,7 +91,8 @@ public struct MyCalendar {
             }
             .filter { event in
                 let isContained = synced.contains { otherEvent in
-                    return areEventsEqual(event, otherEvent, rhsRedacted: redact)
+                    return areEventsEqual(
+                        event, otherEvent, rhsRedacted: redact)
                 }
 
                 return !isContained
@@ -105,7 +109,9 @@ public struct MyCalendar {
     }
 }
 
-private func areEventsEqual(_ lhs: EKEvent, _ rhs: EKEvent, rhsRedacted: Bool = false) -> Bool {
+private func areEventsEqual(
+    _ lhs: EKEvent, _ rhs: EKEvent, rhsRedacted: Bool = false
+) -> Bool {
     if rhsRedacted {
         if rhs.title == SYNC_PREFIX && lhs.title != SYNC_PREFIX {
             let rhsNotes = rhs.notes ?? ""
@@ -121,13 +127,15 @@ private func areEventsEqual(_ lhs: EKEvent, _ rhs: EKEvent, rhsRedacted: Bool = 
     }
 
     let title = lhs.title.replacingOccurrences(
-        of: "\(SYNC_PREFIX) ", with: "")
+        of: "\(SYNC_PREFIX) ", with: ""
+    ).replacingOccurrences(of: "FW: ", with: "")
     let location = lhs.location
     let startDate = lhs.startDate
     let endDate = lhs.endDate
 
     let rhsTitle = rhs.title.replacingOccurrences(
-        of: "\(SYNC_PREFIX) ", with: "")
+        of: "\(SYNC_PREFIX) ", with: ""
+    ).replacingOccurrences(of: "FW: ", with: "")
     let rhsLocation = rhs.location
     let rhsStartDate = rhs.startDate
     let rhsEndDate = rhs.endDate
@@ -141,7 +149,8 @@ extension EKEvent {
     public func hash() -> String {
         let formatter = ISO8601DateFormatter()
         let title: String = self.title.replacingOccurrences(
-            of: "\(SYNC_PREFIX) ", with: "")
+            of: "\(SYNC_PREFIX) ", with: ""
+        ).replacingOccurrences(of: "FW: ", with: "")
         let location: String = self.location ?? ""
         let startDate: String = formatter.string(from: self.startDate)
         let endDate: String = formatter.string(from: self.endDate)
