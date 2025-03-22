@@ -1,0 +1,35 @@
+[
+  {
+    "label": "Swift Build",
+    "command": "swift build",
+    "env": {},
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "on_success",
+    "shell": "system"
+  },
+  {
+    "label": "Swift Test",
+    "command": "swift test",
+    "env": {},
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "Swift Run",
+    "command": "swift run",
+    "env": {},
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "on_success",
+    "shell": "system"
+  }
+]
