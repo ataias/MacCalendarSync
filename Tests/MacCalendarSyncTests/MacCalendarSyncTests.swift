@@ -95,14 +95,14 @@ struct CalendarSyncRedactedTests {
             ("[EXTERNAL] Unknown 1", "2023-01-01T08:00:00Z", "2023-01-01T09:00:00Z", nil),
             (
                 "[EXTERNAL]", "2023-01-01T13:00:00Z", "2023-01-01T14:00:00Z",
-                "\n\n[BASE_HASH]52e0244b3943f027009ee88ce8345d100f1d282e1a153f931e1d02c30688c051"
+                createBaseHashNotes(for: "Event 1", from: "2023-01-01T10:00:00Z", to: "2023-01-01T11:00:00Z")
             ),
         ]
 
         let events2 = [
             (
                 "[EXTERNAL]", "2023-01-01T10:00:00Z", "2023-01-01T11:00:00Z",
-                "\n\n[BASE_HASH]52e0244b3943f027009ee88ce8345d100f1d282e1a153f931e1d02c30688c051"
+                createBaseHashNotes(for: "Event 1", from: "2023-01-01T10:00:00Z", to: "2023-01-01T11:00:00Z")
             ),
             ("[EXTERNAL] Unknown 2", "2023-01-01T10:00:00Z", "2023-01-01T11:00:00Z", nil as String?),
             ("Some Event in Calendar 2", "2023-01-01T09:00:00Z", "2023-01-01T10:00:00Z", nil),
@@ -117,7 +117,6 @@ struct CalendarSyncRedactedTests {
         let event = diff.synced[0]
         #expect(event.title == "Event 1")
         #expect(event.notes == nil)
-        print(event.hash())
         #expect(event.startDate == setup.formatter.date(from: "2023-01-01T10:00:00Z")!)
         #expect(event.endDate == setup.formatter.date(from: "2023-01-01T11:00:00Z")!)
     }
@@ -129,7 +128,8 @@ struct CalendarSyncRedactedTests {
         #expect(event.title == "[EXTERNAL]")
         #expect(
             event.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-                == "[BASE_HASH]52e0244b3943f027009ee88ce8345d100f1d282e1a153f931e1d02c30688c051")
+                == "[BASE_HASH]\(computeEventHash(title: "Event 1", from: "2023-01-01T10:00:00Z", to: "2023-01-01T11:00:00Z"))"
+        )
         #expect(event.startDate == setup.formatter.date(from: "2023-01-01T10:00:00Z")!)
         #expect(event.endDate == setup.formatter.date(from: "2023-01-01T11:00:00Z")!)
     }
@@ -141,7 +141,8 @@ struct CalendarSyncRedactedTests {
         #expect(event.title == "[EXTERNAL]")
         #expect(
             event.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-                == "[BASE_HASH]156105adbf6c574ff1b89ccad689faf1475ecaf6dbd0d304c0ef0289a25a7311")
+                == "[BASE_HASH]\(computeEventHash(title: "Some Event in Calendar 2", from: "2023-01-01T09:00:00Z", to: "2023-01-01T10:00:00Z"))"
+        )
         #expect(event.startDate == setup.formatter.date(from: "2023-01-01T09:00:00Z")!)
         #expect(event.endDate == setup.formatter.date(from: "2023-01-01T10:00:00Z")!)
     }
@@ -153,7 +154,8 @@ struct CalendarSyncRedactedTests {
         #expect(event.title == "[EXTERNAL]")
         #expect(
             event.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-                == "[BASE_HASH]31dc3df45d0beccff67ca1e4ba39eb04b906e1756bcf2aac9e543c5929ae0d59")
+                == "[BASE_HASH]\(computeEventHash(title: "Some Event in Calendar 1", from: "2023-01-01T08:00:00Z", to: "2023-01-01T09:00:00Z"))"
+        )
         #expect(event.startDate == setup.formatter.date(from: "2023-01-01T08:00:00Z")!)
         #expect(event.endDate == setup.formatter.date(from: "2023-01-01T09:00:00Z")!)
     }
@@ -224,28 +226,15 @@ struct ForwardedEventRedactedTests {
             ("FW: Team Standup", "2023-01-01T14:00:00Z", "2023-01-01T15:00:00Z", nil),
         ]
 
-        // For redacted tests, we need to create temp events to get the correct hashes
-        let tempEventStore = MockEventStore()
-        let formatter = ISO8601DateFormatter()
-
-        let tempEvent1 = EKEvent(eventStore: tempEventStore)
-        tempEvent1.title = "Meeting with Client"
-        tempEvent1.startDate = formatter.date(from: "2023-01-01T10:00:00Z")!
-        tempEvent1.endDate = formatter.date(from: "2023-01-01T11:00:00Z")!
-
-        let tempEvent2 = EKEvent(eventStore: tempEventStore)
-        tempEvent2.title = "Team Standup"
-        tempEvent2.startDate = formatter.date(from: "2023-01-01T14:00:00Z")!
-        tempEvent2.endDate = formatter.date(from: "2023-01-01T15:00:00Z")!
-
         let events2 = [
             (
                 "[EXTERNAL]", "2023-01-01T10:00:00Z", "2023-01-01T11:00:00Z",
-                "\n\n[BASE_HASH]\(tempEvent1.hash())"
+                createBaseHashNotes(
+                    for: "Meeting with Client", from: "2023-01-01T10:00:00Z", to: "2023-01-01T11:00:00Z")
             ),
             (
                 "[EXTERNAL]", "2023-01-01T14:00:00Z", "2023-01-01T15:00:00Z",
-                "\n\n[BASE_HASH]\(tempEvent2.hash())"
+                createBaseHashNotes(for: "Team Standup", from: "2023-01-01T14:00:00Z", to: "2023-01-01T15:00:00Z")
             ),
         ]
 
@@ -264,27 +253,18 @@ struct ForwardedEventRedactedTests {
         let diff = setup.calendar2.diff(setup.calendar1, start: setup.startDate, end: setup.endDate, redact: true)
         try #require(diff.synced.count == 2)
 
-        let formatter = ISO8601DateFormatter()
-        let tempEventStore = MockEventStore()
-
-        let tempEvent1 = EKEvent(eventStore: tempEventStore)
-        tempEvent1.title = "Meeting with Client"
-        tempEvent1.startDate = formatter.date(from: "2023-01-01T10:00:00Z")!
-        tempEvent1.endDate = formatter.date(from: "2023-01-01T11:00:00Z")!
-
-        let tempEvent2 = EKEvent(eventStore: tempEventStore)
-        tempEvent2.title = "Team Standup"
-        tempEvent2.startDate = formatter.date(from: "2023-01-01T14:00:00Z")!
-        tempEvent2.endDate = formatter.date(from: "2023-01-01T15:00:00Z")!
-
         let syncedEvents = diff.synced.sorted { $0.startDate < $1.startDate }
 
         #expect(syncedEvents[0].title == "[EXTERNAL]")
         #expect(
-            syncedEvents[0].notes?.trimmingCharacters(in: .whitespacesAndNewlines) == "[BASE_HASH]\(tempEvent1.hash())")
+            syncedEvents[0].notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+                == "[BASE_HASH]\(computeEventHash(title: "Meeting with Client", from: "2023-01-01T10:00:00Z", to: "2023-01-01T11:00:00Z"))"
+        )
 
         #expect(syncedEvents[1].title == "[EXTERNAL]")
         #expect(
-            syncedEvents[1].notes?.trimmingCharacters(in: .whitespacesAndNewlines) == "[BASE_HASH]\(tempEvent2.hash())")
+            syncedEvents[1].notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+                == "[BASE_HASH]\(computeEventHash(title: "Team Standup", from: "2023-01-01T14:00:00Z", to: "2023-01-01T15:00:00Z"))"
+        )
     }
 }
