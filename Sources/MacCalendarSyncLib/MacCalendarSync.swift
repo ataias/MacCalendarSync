@@ -209,9 +209,7 @@ public struct CalendarEvent: CustomStringConvertible {
     }
 
     public var compactDescription: String {
-        let shortId = String(id.prefix(8))
         let startStr = DateFormatter.shortDateTime.string(from: startDate)
-        let endStr = DateFormatter.shortDateTime.string(from: endDate)
         let parts = organizer.email.split(separator: "@")
         let organizerDomain: String =
             if organizer.email.contains("@") {
@@ -220,7 +218,22 @@ public struct CalendarEvent: CustomStringConvertible {
                 organizer.email.isEmpty ? "unknown" : organizer.email
             }
 
-        return "  [\(shortId)] \(title) | \(startStr) - \(endStr) | \(organizerDomain)"
+        // Clean up title by removing common prefixes
+        var cleanTitle = title
+        let prefixesToRemove = ["[EXTERNAL] ", "Synced invitation: ", "FW: ", "Re: "]
+        for prefix in prefixesToRemove {
+            if cleanTitle.hasPrefix(prefix) {
+                cleanTitle = String(cleanTitle.dropFirst(prefix.count))
+            }
+        }
+
+        // Truncate very long titles
+        if cleanTitle.count > 60 {
+            cleanTitle = String(cleanTitle.prefix(57)) + "..."
+        }
+
+        let domainSuffix = organizerDomain == "unknown.com" ? "" : " @\(organizerDomain)"
+        return "\(startStr) \(cleanTitle)\(domainSuffix)"
     }
 
 }

@@ -7,8 +7,11 @@ struct MacCalendarSync: AsyncParsableCommand {
     @Flag(help: "Skips calendar mutations.")
     var dryRun = false
 
-    @Flag(help: "Shows status information and what will be changed.")
-    var verbose = false
+    @Flag(
+        name: [.short, .long],
+        help:
+            "Shows status information and what will be changed. Use -v for changes only, -vv to include synced events.")
+    var verbose: Int
 
     @Flag(help: "Redact event information before copying")
     var redact = false
@@ -53,48 +56,51 @@ struct MacCalendarSync: AsyncParsableCommand {
         let diff = target.diff(
             source, start: startDate, end: endDate, redact: redact)
 
-        if verbose {
-            print(">>> Processing calendars:")
-            print("    Source: \(sourceCalendarName)")
-            print("    Target: \(targetCalendarName)")
-            print(
-                "    Period: \(DateFormatter.shortDate.string(from: startDate)) - \(DateFormatter.shortDate.string(from: endDate))"
-            )
-            print("")
+        let synced = diff.synced.map(CalendarEvent.init)
+        let add = diff.add.map(CalendarEvent.init)
+        let remove = diff.remove.map(CalendarEvent.init)
 
-            let synced = diff.synced.map(CalendarEvent.init)
-            let add = diff.add.map(CalendarEvent.init)
-            let remove = diff.remove.map(CalendarEvent.init)
+        // Compact single-line output
+        let period =
+            "\(DateFormatter.shortDate.string(from: startDate)) - \(DateFormatter.shortDate.string(from: endDate))"
+        let syncStatus = "\(synced.count) synced"
 
-            // Summary statistics
-            print(">>> Summary:")
-            print("    Already synced: \(synced.count) events")
-            print("    To add: \(add.count) events")
-            print("    To remove: \(remove.count) events")
-            print("")
+        var changes: [String] = []
+        if add.count > 0 {
+            changes.append("+\(add.count) to add")
+        }
+        if remove.count > 0 {
+            changes.append("-\(remove.count) to remove")
+        }
 
-            // Show synced events if any
-            if !synced.isEmpty {
-                print(">>> synced:")
-                for event in synced {
-                    print(event.compactDescription)
-                }
-                print("")
-            }
+        let changeStatus = changes.isEmpty ? "no changes" : changes.joined(separator: ", ")
+        print("\(sourceCalendarName) → \(targetCalendarName) (\(period)): \(syncStatus), \(changeStatus)")
 
-            // Show events to add if any
+        // Show detailed event listings based on verbose level
+        if verbose >= 1 {
+            // Level 1: Show only changed events (add/remove)
             if !add.isEmpty {
-                print(">>> add:")
+                print("add:")
                 for event in add {
                     print(event.compactDescription)
                 }
                 print("")
             }
 
-            // Show events to remove if any
             if !remove.isEmpty {
-                print(">>> remove:")
+                print("remove:")
                 for event in remove {
+                    print(event.compactDescription)
+                }
+                print("")
+            }
+        }
+
+        if verbose >= 2 {
+            // Level 2: Also show synced events
+            if !synced.isEmpty {
+                print("synced:")
+                for event in synced {
                     print(event.compactDescription)
                 }
                 print("")
