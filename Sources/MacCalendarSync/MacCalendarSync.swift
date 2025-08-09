@@ -54,24 +54,50 @@ struct MacCalendarSync: AsyncParsableCommand {
             source, start: startDate, end: endDate, redact: redact)
 
         if verbose {
+            print(">>> Processing calendars:")
+            print("    Source: \(sourceCalendarName)")
+            print("    Target: \(targetCalendarName)")
+            print(
+                "    Period: \(DateFormatter.shortDate.string(from: startDate)) - \(DateFormatter.shortDate.string(from: endDate))"
+            )
+            print("")
+
             let synced = diff.synced.map(CalendarEvent.init)
-            print(">>> synced: \n")
-            for event in synced {
-                print(event.shortDescription)
-            }
-
             let add = diff.add.map(CalendarEvent.init)
+            let remove = diff.remove.map(CalendarEvent.init)
+
+            // Summary statistics
+            print(">>> Summary:")
+            print("    Already synced: \(synced.count) events")
+            print("    To add: \(add.count) events")
+            print("    To remove: \(remove.count) events")
             print("")
-            print(">>> add: \n")
-            for event in add {
-                print(event.shortDescription)
+
+            // Show synced events if any
+            if !synced.isEmpty {
+                print(">>> synced:")
+                for event in synced {
+                    print(event.compactDescription)
+                }
+                print("")
             }
 
-            let remove = diff.remove.map(CalendarEvent.init)
-            print("")
-            print(">>> remove: \n")
-            for event in remove {
-                print(event.shortDescription)
+            // Show events to add if any
+            if !add.isEmpty {
+                print(">>> add:")
+                for event in add {
+                    print(event.compactDescription)
+                }
+                print("")
+            }
+
+            // Show events to remove if any
+            if !remove.isEmpty {
+                print(">>> remove:")
+                for event in remove {
+                    print(event.compactDescription)
+                }
+                print("")
             }
         }
 

@@ -208,15 +208,19 @@ public struct CalendarEvent: CustomStringConvertible {
             """
     }
 
-    public var shortDescription: String {
-        return """
-            ------------------------------------------
-            id: \(id)
-            title: \(title)
-            time: [\(startDate), \(endDate)]
-            organizer: \(organizer.email)
-            availability: \(availability)
-            """
+    public var compactDescription: String {
+        let shortId = String(id.prefix(8))
+        let startStr = DateFormatter.shortDateTime.string(from: startDate)
+        let endStr = DateFormatter.shortDateTime.string(from: endDate)
+        let parts = organizer.email.split(separator: "@")
+        let organizerDomain: String =
+            if organizer.email.contains("@") {
+                parts.count >= 2 ? String(parts.last!) : "unknown"
+            } else {
+                organizer.email.isEmpty ? "unknown" : organizer.email
+            }
+
+        return "  [\(shortId)] \(title) | \(startStr) - \(endStr) | \(organizerDomain)"
     }
 
 }
@@ -330,4 +334,20 @@ extension String {
         }
         return ""
     }
+}
+
+extension DateFormatter {
+    public static let shortDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .none
+        return formatter
+    }()
+
+    static let shortDateTime: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
+    }()
 }
