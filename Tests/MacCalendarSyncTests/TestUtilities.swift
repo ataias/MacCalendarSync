@@ -5,6 +5,24 @@ import Foundation
 
 // MARK: - Test Data Creation Utilities
 
+/// Creates a hash for an event with the given properties
+func computeEventHash(title: String, location: String? = nil, from: String, to: String) -> String {
+    let tempEventStore = MockEventStore()
+    let formatter = ISO8601DateFormatter()
+    let event = EKEvent(eventStore: tempEventStore)
+    event.title = title
+    event.location = location
+    event.startDate = formatter.date(from: from)!
+    event.endDate = formatter.date(from: to)!
+    return event.hash()
+}
+
+/// Creates notes with BASE_HASH format
+func createBaseHashNotes(for title: String, location: String? = nil, from: String, to: String) -> String {
+    let hash = computeEventHash(title: title, location: location, from: from, to: to)
+    return "\n\n[BASE_HASH]\(hash)"
+}
+
 func makeCalendar(eventStore: EKEventStore, title: String) throws -> EKCalendar {
     let calendar = EKCalendar(for: .event, eventStore: eventStore)
     calendar.title = title
