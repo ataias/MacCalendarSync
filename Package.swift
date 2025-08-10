@@ -11,10 +11,14 @@ let package = Package(
     products: [
         .library(
             name: "MacCalendarSyncLib",
-            targets: ["MacCalendarSyncLib"])
+            targets: ["MacCalendarSyncLib"]),
+        .executable(
+            name: "release-tool",
+            targets: ["ReleaseTool"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0")
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
+        .package(url: "https://github.com/swiftlang/swift-subprocess", branch: "main"),
     ],
     targets: [
         .executableTarget(
@@ -22,6 +26,12 @@ let package = Package(
             dependencies: [
                 "MacCalendarSyncLib",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]),
+        .executableTarget(
+            name: "ReleaseTool",
+            dependencies: [
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "Subprocess", package: "swift-subprocess"),
             ]),
         .target(
             name: "MacCalendarSyncLib"),
