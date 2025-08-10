@@ -10,6 +10,15 @@ swift run -- MacCalendarSync --verbose --target-calendar-name "Target Calendar" 
 
 ## Install
 
+### Homebrew (Recommended)
+
+```sh
+brew tap ataias/mac-calendar-sync
+brew install mac-calendar-sync
+```
+
+### From Source
+
 ```sh
 make
 make install
@@ -22,7 +31,7 @@ The above will install the program to `~/.local/bin/mac-calendar-sync`. If that'
 PREFIX=/usr/local/bin sudo make -e install
 ```
 
-### Auto Completions
+#### Auto Completions
 For autocompletions, you can generate them for your shell with the following commands:
 
 ```sh
