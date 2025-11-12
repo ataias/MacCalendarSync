@@ -71,6 +71,7 @@ public struct MyCalendar {
                 event.location = otherCalendarEvent.location
                 event.startDate = otherCalendarEvent.startDate
                 event.endDate = otherCalendarEvent.endDate
+                event.isAllDay = otherCalendarEvent.isAllDay
                 var notes = otherCalendarEvent.notes ?? ""
                 if redact {
                     event.title = SYNC_PREFIX
@@ -132,6 +133,7 @@ private func areEventsEqual(
     let location = lhs.location
     let startDate = lhs.startDate
     let endDate = lhs.endDate
+    let isAllDay = lhs.isAllDay
 
     let rhsTitle = rhs.title.replacingOccurrences(
         of: "\(SYNC_PREFIX) ", with: ""
@@ -139,9 +141,11 @@ private func areEventsEqual(
     let rhsLocation = rhs.location
     let rhsStartDate = rhs.startDate
     let rhsEndDate = rhs.endDate
+    let rhsIsAllDay = rhs.isAllDay
 
     return title == rhsTitle && location == rhsLocation
         && startDate == rhsStartDate && endDate == rhsEndDate
+        && isAllDay == rhsIsAllDay
 
 }
 
@@ -154,8 +158,9 @@ extension EKEvent {
         let location: String = self.location ?? ""
         let startDate: String = formatter.string(from: self.startDate)
         let endDate: String = formatter.string(from: self.endDate)
+        let isAllDay: String = self.isAllDay ? "true" : "false"
 
-        return "\(title),\(location),\(startDate),\(endDate)".sha256()
+        return "\(title),\(location),\(startDate),\(endDate),\(isAllDay)".sha256()
     }
 }
 
@@ -182,6 +187,7 @@ public struct CalendarEvent: CustomStringConvertible {
     let attendees: [Participant]
     let status: EKEventStatus
     let availability: EKEventAvailability
+    let isAllDay: Bool
 
     public init(event: EKEvent) {
         self.id = event.calendarItemExternalIdentifier!
@@ -193,6 +199,7 @@ public struct CalendarEvent: CustomStringConvertible {
         self.attendees = event.attendees?.compactMap(Participant.init) ?? []
         self.status = event.status
         self.availability = event.availability
+        self.isAllDay = event.isAllDay
     }
 
     public var description: String {

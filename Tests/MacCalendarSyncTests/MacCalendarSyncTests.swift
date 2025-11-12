@@ -268,3 +268,103 @@ struct ForwardedEventRedactedTests {
         )
     }
 }
+
+@Suite("AllDayEventTests")
+struct AllDayEventTests {
+    let setup: TestCalendarSetupWithAllDay
+
+    init() async throws {
+        let events1 = [
+            ("All-Day Event", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil as String?, true),
+            ("Timed Event", "2023-01-01T10:00:00Z", "2023-01-01T11:00:00Z", nil, false),
+        ]
+
+        let events2 = [
+            ("[EXTERNAL] All-Day Event", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil as String?, true),
+            ("Different Event", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil, false),
+        ]
+
+        self.setup = try await TestCalendarSetupWithAllDay(events1: events1, events2: events2)
+    }
+
+    @Test func preservesAllDayStatusWhenCopying() async throws {
+        let diff = setup.calendar1.diff(setup.calendar2, start: setup.startDate, end: setup.endDate, redact: false)
+        try #require(diff.add.count == 1)
+        let addedEvent = diff.add[0]
+        #expect(addedEvent.title == "[EXTERNAL] Different Event")
+        #expect(addedEvent.isAllDay == false)
+    }
+
+    @Test func identifiesSyncedAllDayEvents() async throws {
+        let diff = setup.calendar1.diff(setup.calendar2, start: setup.startDate, end: setup.endDate, redact: false)
+        try #require(diff.synced.count == 1)
+        let syncedEvent = diff.synced[0]
+        #expect(syncedEvent.title == "All-Day Event")
+        #expect(syncedEvent.isAllDay == true)
+    }
+
+    @Test func distinguishesAllDayFromTimedEventsWithSameDates() async throws {
+        // Create two events with the same start and end dates but different isAllDay status
+        let events1 = [
+            ("Event A", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil as String?, true)
+        ]
+        let events2 = [
+            ("Event A", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil as String?, false)
+        ]
+
+        let setup = try await TestCalendarSetupWithAllDay(events1: events1, events2: events2)
+        let diff = setup.calendar1.diff(setup.calendar2, start: setup.startDate, end: setup.endDate, redact: false)
+
+        // These should NOT be synced because one is all-day and one is not
+        #expect(diff.synced.count == 0)
+        #expect(diff.add.count == 1)
+    }
+}
+
+@Suite("AllDayEventTests - Redacted")
+struct AllDayEventRedactedTests {
+    let setup: TestCalendarSetupWithAllDay
+
+    init() async throws {
+        let events1 = [
+            ("All-Day Event", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil as String?, true)
+        ]
+
+        let events2 = [
+            (
+                "[EXTERNAL]", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z",
+                createBaseHashNotesWithAllDay(for: "All-Day Event", from: "2023-01-01T00:00:00Z", to: "2023-01-02T00:00:00Z", isAllDay: true),
+                true
+            )
+        ]
+
+        self.setup = try await TestCalendarSetupWithAllDay(events1: events1, events2: events2)
+    }
+
+    @Test func identifiesRedactedSyncedAllDayEvents() async throws {
+        let diff = setup.calendar1.diff(setup.calendar2, start: setup.startDate, end: setup.endDate, redact: true)
+        try #require(diff.synced.count == 1)
+        let syncedEvent = diff.synced[0]
+        #expect(syncedEvent.title == "All-Day Event")
+        #expect(syncedEvent.isAllDay == true)
+    }
+
+    @Test func distinguishesRedactedAllDayFromTimedEventsWithSameDates() async throws {
+        // Create an all-day event in calendar 1 and a non-all-day event in calendar 2 with the same dates
+        // Calendar 2 has a redacted event that looks like it might match, but it's not all-day
+        let events1 = [
+            ("All-Day Event", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil as String?, true)
+        ]
+        let events2 = [
+            // This is a NON-all-day event that happens to have the same dates as the all-day event in calendar 1
+            ("Some Event", "2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", nil as String?, false)
+        ]
+
+        let setup = try await TestCalendarSetupWithAllDay(events1: events1, events2: events2)
+        let diff = setup.calendar1.diff(setup.calendar2, start: setup.startDate, end: setup.endDate, redact: true)
+
+        // These should NOT be synced because one is all-day and one is not, even in redacted mode
+        #expect(diff.synced.count == 0)
+        #expect(diff.add.count == 1)
+    }
+}
