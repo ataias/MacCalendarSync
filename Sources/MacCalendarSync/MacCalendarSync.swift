@@ -28,6 +28,9 @@ struct MacCalendarSync: AsyncParsableCommand {
     @Option(help: "End date in format \(INPUT_DATE_FORMAT)")
     var endDate: String
 
+    @Option(parsing: .upToNextOption, help: "Invitee emails to ignore; events with these invitees will not be synced")
+    var ignoreInvitee: [String] = []
+
     mutating func run() async throws {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -54,7 +57,7 @@ struct MacCalendarSync: AsyncParsableCommand {
 
         // TODO: when the copied redacted event is modified (start/endDate), it is not deleted; need to add a test there
         let diff = target.diff(
-            source, start: startDate, end: endDate, redact: redact)
+            source, start: startDate, end: endDate, redact: redact, ignoreInvitees: ignoreInvitee)
 
         let synced = diff.synced.map(CalendarEvent.init)
         let add = diff.add.map(CalendarEvent.init)

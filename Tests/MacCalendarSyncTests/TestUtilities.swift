@@ -161,6 +161,29 @@ struct TestCalendarSetupWithAllDay {
     }
 }
 
+// MARK: - Test Attendee Tracking
+
+/// Tracks attendee emails for events in tests (since EKParticipant has no public initializer)
+class TestAttendeeTracker {
+    private var attendeesByEventKey: [String: [String]] = [:]
+
+    func setAttendees(_ emails: [String], forEventTitle title: String, startDate: String) {
+        let key = makeKey(title: title, startDate: startDate)
+        attendeesByEventKey[key] = emails
+    }
+
+    func getAttendees(for event: EKEvent) -> [String] {
+        let formatter = ISO8601DateFormatter()
+        let startStr = formatter.string(from: event.startDate)
+        let key = makeKey(title: event.title ?? "", startDate: startStr)
+        return attendeesByEventKey[key] ?? []
+    }
+
+    private func makeKey(title: String, startDate: String) -> String {
+        return "\(title)--\(startDate)"
+    }
+}
+
 // MARK: - Mock Event Store
 
 class MockEventStore: EKEventStore {
