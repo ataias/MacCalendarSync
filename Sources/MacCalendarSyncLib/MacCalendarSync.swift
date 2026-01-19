@@ -40,10 +40,24 @@ public struct MyCalendar {
         _ other: MyCalendar,
         start: Date,
         end: Date,
-        redact: Bool
+        redact: Bool,
+        ignoreInvitees: [String] = [],
+        getAttendeeEmails: ((EKEvent) -> [String])? = nil
     ) -> CalendarDiff {
+        let attendeeExtractor = getAttendeeEmails ?? { event in
+            event.attendees?.compactMap { participant in
+                participant.url.absoluteString.replacingOccurrences(of: "mailto:", with: "").lowercased()
+            } ?? []
+        }
+
         let myEvents = self.getEvents(start: start, end: end)
         let otherEvents = other.getEvents(start: start, end: end)
+            .filter { event in
+                guard !ignoreInvitees.isEmpty else { return true }
+                let attendeeEmails = attendeeExtractor(event)
+                let ignoredSet = Set(ignoreInvitees.map { $0.lowercased() })
+                return attendeeEmails.allSatisfy { !ignoredSet.contains($0) }
+            }
 
         let synced = myEvents.filter { event in
             return otherEvents.contains { otherEvent in
