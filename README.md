@@ -8,6 +8,13 @@ To run it:
 swift run -- MacCalendarSync --verbose --target-calendar-name "Target Calendar" --source-calendar-name "Source Calendar" --start-date "2025-02-10 00:00:00" --end-date "2025-02-21 23:23:59" --dry-run
 ```
 
+Dates can also be relative to today, which is handy for running the sync on a schedule. Offsets use `d` (days) or `w` (weeks) and are anchored to the start of the day in the system time zone; `--start-date` defaults to `today`. The end date can't be a negative offset and can't come before the start date. Negative values need `=` so they aren't parsed as flags:
+
+```
+# From the start of yesterday until the end of the day 30 days from now
+swift run -- MacCalendarSync --target-calendar-name "Target Calendar" --source-calendar-name "Source Calendar" --start-date=-1d --end-date 30d --dry-run
+```
+
 ## Install
 
 ### Homebrew (Recommended)
