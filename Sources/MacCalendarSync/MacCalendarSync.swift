@@ -22,31 +22,36 @@ struct MacCalendarSync: AsyncParsableCommand {
     @Option(help: "Source calendar name; events will be copied from this one into target")
     var sourceCalendarName: String
 
-    @Option(help: "Start date in format \(INPUT_DATE_FORMAT)")
-    var startDate: String
+    @Option(
+        help: """
+            Start date: 'today', an offset in days or weeks from today (e.g. -1d, 2w), \
+            or a date in format \(INPUT_DATE_FORMAT). Negative offsets need '=', e.g. --start-date=-1d
+            """)
+    var startDate: String = "today"
 
-    @Option(help: "End date in format \(INPUT_DATE_FORMAT)")
+    @Option(
+        help: """
+            End date: 'today', a non-negative offset in days or weeks from today (e.g. 30d, 2w), \
+            or a date in format \(INPUT_DATE_FORMAT)
+            """)
     var endDate: String
 
     @Option(parsing: .upToNextOption, help: "Invitee emails to ignore; events with these invitees will not be synced")
     var ignoreInvitee: [String] = []
 
     mutating func run() async throws {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = INPUT_DATE_FORMAT
+        guard let startInput = DateInput(startDate) else {
+            fatalError(
+                "Start date not valid; use 'today', an offset like -1d or 2w, or format \(INPUT_DATE_FORMAT)")
+        }
+        guard let endInput = DateInput(endDate) else {
+            fatalError(
+                "End date not valid; use 'today', an offset like 30d or 2w, or format \(INPUT_DATE_FORMAT)")
+        }
+        let (startDate, endDate) = try resolveDateRange(start: startInput, end: endInput)
 
         let eventStore = EKEventStore()
         try await eventStore.requestFullAccessToEvents()
-
-        guard let startDate = formatter.date(from: startDate) else {
-            fatalError(
-                "Start date not valid; Format should be \(INPUT_DATE_FORMAT)")
-        }
-        guard let endDate = formatter.date(from: endDate) else {
-            fatalError(
-                "End date not valid; Format should be \(INPUT_DATE_FORMAT)")
-        }
 
         let target = MyCalendar(
             eventStore: eventStore,
