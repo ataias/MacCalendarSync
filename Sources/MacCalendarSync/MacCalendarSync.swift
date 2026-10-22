@@ -27,28 +27,28 @@ struct MacCalendarSync: AsyncParsableCommand {
             Start date: 'today', an offset in days or weeks from today (e.g. -1d, 2w), \
             or a date in format \(INPUT_DATE_FORMAT). Negative offsets need '=', e.g. --start-date=-1d
             """)
-    var startDate: String = "today"
+    var startDate: DateInput = .relative(days: 0)
 
     @Option(
         help: """
             End date: 'today', a non-negative offset in days or weeks from today (e.g. 30d, 2w), \
             or a date in format \(INPUT_DATE_FORMAT)
             """)
-    var endDate: String
+    var endDate: DateInput
 
     @Option(parsing: .upToNextOption, help: "Invitee emails to ignore; events with these invitees will not be synced")
     var ignoreInvitee: [String] = []
 
+    mutating func validate() throws {
+        do {
+            _ = try resolveDateRange(start: startDate, end: endDate)
+        } catch {
+            throw ValidationError(error.description)
+        }
+    }
+
     mutating func run() async throws {
-        guard let startInput = DateInput(startDate) else {
-            fatalError(
-                "Start date not valid; use 'today', an offset like -1d or 2w, or format \(INPUT_DATE_FORMAT)")
-        }
-        guard let endInput = DateInput(endDate) else {
-            fatalError(
-                "End date not valid; use 'today', an offset like 30d or 2w, or format \(INPUT_DATE_FORMAT)")
-        }
-        let (startDate, endDate) = try resolveDateRange(start: startInput, end: endInput)
+        let (startDate, endDate) = try resolveDateRange(start: self.startDate, end: self.endDate)
 
         let eventStore = EKEventStore()
         try await eventStore.requestFullAccessToEvents()
@@ -127,6 +127,26 @@ struct MacCalendarSync: AsyncParsableCommand {
         }
         try eventStore.commit()
 
+    }
+}
+
+extension DateInput: ExpressibleByArgument {
+    public init?(argument: String) {
+        self.init(argument)
+    }
+
+    public var defaultValueDescription: String {
+        switch self {
+        case .relative(days: 0):
+            return "today"
+        case .relative(let days):
+            return days > 0 ? "+\(days)d" : "\(days)d"
+        case .absolute(let date):
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = INPUT_DATE_FORMAT
+            return formatter.string(from: date)
+        }
     }
 }
 
